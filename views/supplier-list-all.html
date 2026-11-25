@@ -1,0 +1,249 @@
+{{>header}}
+{{>nav}}
+<div class="container">
+        {{#imported}}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Imported {{.}} student(s) successfully.
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {{/imported}}
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <h1 class="mb-0">All students</h1>
+        <div class="d-flex align-items-center flex-wrap justify-content-end">
+            <button type="button" id="bulkDeleteBtn" class="btn btn-danger mr-2 d-none"
+                    data-toggle="modal" data-target="#bulkDeleteModal">
+                Delete (<span id="selCount">0</span>)
+            </button>
+            <a class="btn btn-outline-secondary mr-2" href="/students/import">Import CSV</a>
+            <a class="btn btn-outline-success mr-2" href="/students/export">Export to Excel</a>
+            <a class="btn btn-success" href="/supplier-add">Add a new student</a>
+        </div>
+    </div>
+
+    <table class="table table-hover table-fixed">
+        <colgroup>
+            <col style="width: 4%">
+            <col style="width: 14%">
+            <col style="width: 16%">
+            <col style="width: 11%">
+            <col style="width: 10%">
+            <col style="width: 19%">
+            <col style="width: 12%">
+            <col style="width: 14%">
+        </colgroup>
+        <thead>
+        <tr>
+            <th scope="col"><input type="checkbox" id="checkAll" aria-label="Select all students on this page"></th>
+            <th scope="col">Name</th>
+            <th scope="col">Address</th>
+            <th scope="col">City</th>
+            <th scope="col">State</th>
+            <th scope="col">Email</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#students}}
+        <tr class="student-row"
+            data-id="{{id}}" data-name="{{name}}" data-address="{{address}}" data-city="{{city}}"
+            data-state="{{state}}" data-email="{{email}}" data-phone="{{phone}}">
+            <td class="check-cell">
+                <input type="checkbox" class="row-check" name="ids" value="{{id}}" form="bulkForm"
+                       aria-label="Select {{name}}">
+            </td>
+            <th scope="row">{{name}}</th>
+            <td>{{address}}</td>
+            <td>{{city}}</td>
+            <td>{{state}}</td>
+            <td>{{email}}</td>
+            <td>{{phone}}</td>
+            <td class="actions-cell text-nowrap">
+                <a class="btn btn-sm btn-info" href="/supplier-update/{{id}}">Edit</a>
+                <button type="button" class="btn btn-sm btn-danger btn-delete"
+                        data-toggle="modal" data-target="#deleteModal"
+                        data-id="{{id}}" data-name="{{name}}">Delete</button>
+            </td>
+        </tr>
+        {{/students}}
+        </tbody>
+    </table>
+
+    {{#pagination}}
+    <p class="text-muted">Showing {{from}}–{{to}} of {{total}} students</p>
+    {{#show}}
+    <nav aria-label="Student pages">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {{^hasPrev}}disabled{{/hasPrev}}">
+                <a class="page-link" href="/students?page={{prev}}">Previous</a>
+            </li>
+            {{#pages}}
+            <li class="page-item {{#active}}active{{/active}}">
+                <a class="page-link" href="/students?page={{number}}">{{number}}</a>
+            </li>
+            {{/pages}}
+            <li class="page-item {{^hasNext}}disabled{{/hasNext}}">
+                <a class="page-link" href="/students?page={{next}}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {{/show}}
+    {{/pagination}}
+
+    <!-- Single delete popup -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete student</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete student <strong id="deleteName"></strong>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <form id="deleteForm" action="" method="POST">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk delete popup. The row checkboxes belong to bulkForm through their form="bulkForm" attribute -->
+    <div class="modal fade" id="bulkDeleteModal" tabindex="-1" role="dialog" aria-labelledby="bulkDeleteLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkDeleteLabel">Delete selected students</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete <strong><span id="modalCount">0</span> student<span id="modalPlural">s</span></strong>?
+                    This cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <form id="bulkForm" action="/supplier-remove-bulk" method="POST">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details side panel -->
+    <div id="panelBackdrop" class="panel-backdrop"></div>
+    <aside id="detailPanel" class="detail-panel" aria-hidden="true" aria-label="Student details">
+        <div class="detail-header">
+            <h5 class="mb-0">Student details</h5>
+            <button type="button" class="close" id="panelClose" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="detail-body">
+            <dl class="mb-0">
+                <dt>Name</dt><dd id="dName"></dd>
+                <dt>Address</dt><dd id="dAddress"></dd>
+                <dt>City</dt><dd id="dCity"></dd>
+                <dt>State</dt><dd id="dState"></dd>
+                <dt>Email</dt><dd id="dEmail"></dd>
+                <dt>Phone</dt><dd id="dPhone"></dd>
+            </dl>
+        </div>
+        <div class="detail-footer">
+            <a id="dEdit" class="btn btn-info" href="#">Edit student</a>
+        </div>
+    </aside>
+
+    <script>
+        (function () {
+            // ----- single delete popup -----
+            document.querySelectorAll('.btn-delete').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    document.getElementById('deleteName').textContent = btn.dataset.name;
+                    document.getElementById('deleteForm').action = '/supplier-remove/' + btn.dataset.id;
+                });
+            });
+
+            // ----- checkboxes and bulk delete button -----
+            var boxes = Array.prototype.slice.call(document.querySelectorAll('.row-check'));
+            var checkAll = document.getElementById('checkAll');
+            var bulkBtn = document.getElementById('bulkDeleteBtn');
+
+            function updateBulk() {
+                var n = boxes.filter(function (b) { return b.checked; }).length;
+                bulkBtn.classList.toggle('d-none', n === 0);
+                document.getElementById('selCount').textContent = n;
+                document.getElementById('modalCount').textContent = n;
+                document.getElementById('modalPlural').textContent = n === 1 ? '' : 's';
+                checkAll.checked = n > 0 && n === boxes.length;
+                checkAll.indeterminate = n > 0 && n < boxes.length;
+                boxes.forEach(function (b) {
+                    b.closest('tr').classList.toggle('table-active', b.checked);
+                });
+            }
+
+            checkAll.addEventListener('change', function () {
+                boxes.forEach(function (b) { b.checked = checkAll.checked; });
+                updateBulk();
+            });
+            boxes.forEach(function (b) { b.addEventListener('change', updateBulk); });
+            updateBulk();
+
+            // ----- details side panel -----
+            var panel = document.getElementById('detailPanel');
+            var backdrop = document.getElementById('panelBackdrop');
+            var activeRow = null;
+
+            function openPanel(tr) {
+                var d = tr.dataset;
+                document.getElementById('dName').textContent = d.name;
+                document.getElementById('dAddress').textContent = d.address;
+                document.getElementById('dCity').textContent = d.city;
+                document.getElementById('dState').textContent = d.state;
+                document.getElementById('dEmail').textContent = d.email;
+                document.getElementById('dPhone').textContent = d.phone;
+                document.getElementById('dEdit').href = '/supplier-update/' + d.id;
+
+                if (activeRow) activeRow.classList.remove('row-active');
+                activeRow = tr;
+                tr.classList.add('row-active');
+
+                panel.classList.add('open');
+                backdrop.classList.add('open');
+                panel.setAttribute('aria-hidden', 'false');
+            }
+
+            function closePanel() {
+                panel.classList.remove('open');
+                backdrop.classList.remove('open');
+                panel.setAttribute('aria-hidden', 'true');
+                if (activeRow) activeRow.classList.remove('row-active');
+                activeRow = null;
+            }
+
+            document.querySelectorAll('tr.student-row').forEach(function (tr) {
+                tr.addEventListener('click', function (e) {
+                    // ignore clicks on the checkbox cell and the Edit / Delete buttons
+                    if (e.target.closest('a, button, input, .check-cell')) return;
+                    openPanel(tr);
+                });
+            });
+            document.getElementById('panelClose').addEventListener('click', closePanel);
+            backdrop.addEventListener('click', closePanel);
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closePanel();
+            });
+        })();
+    </script>
+</div>
+{{>footer}}
