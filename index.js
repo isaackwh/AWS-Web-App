@@ -35,6 +35,16 @@ app.get("/supplier-update/:id", supplier.findOne);
 app.post("/supplier-update", supplier.update);
 // receive the POST to delete a supplier
 app.post("/supplier-remove/:id", supplier.remove);
+// receive the POST to delete several suppliers at once
+app.post("/supplier-remove-bulk", supplier.removeMany);
+// import students from a CSV file
+app.get("/students/import", (req, res) => {
+    res.render("supplier-import", {});
+});
+app.post("/students/import", supplier.importCsv);
+app.get("/students/import-template", supplier.downloadTemplate);
+// download the student list as an Excel file
+app.get("/students/export", supplier.exportExcel);
 // handle 404
 app.use(function (req, res, next) {
     res.status(404).render("404", {});
