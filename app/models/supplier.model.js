@@ -42,6 +42,33 @@ Supplier.create = (newSupplier, result) => {
     });
 };
 
+Supplier.count = result => {
+    const dbConn = Supplier.dbConnect();
+    dbConn.query("SELECT COUNT(*) AS total FROM students", (err, res) => {
+        dbConn.end();
+        if (err) {
+            console.log("error: ", err);
+            result(err, null);
+            return;
+        }
+        result(null, res[0].total);
+    });
+};
+
+Supplier.getPage = (limit, offset, result) => {
+    const dbConn = Supplier.dbConnect();
+    dbConn.query("SELECT * FROM students ORDER BY id LIMIT ? OFFSET ?", [limit, offset], (err, res) => {
+        dbConn.end();
+        if (err) {
+            console.log("error: ", err);
+            result(err, null);
+            return;
+        }
+        result(null, res);
+    });
+};
+
+
 Supplier.getAll = result => {
     const dbConn = Supplier.dbConnect();
     dbConn.query("SELECT * FROM students", (err, res) => {
@@ -119,6 +146,48 @@ Supplier.removeAll = result => {
             return;
         }
         console.log(`deleted ${res.affectedRows} students`);
+        result(null, res);
+    });
+};
+
+Supplier.removeMany = (ids, result) => {
+    const dbConn = Supplier.dbConnect();
+    dbConn.query("DELETE FROM students WHERE id IN (?)", [ids], (err, res) => {
+        dbConn.end();
+        if (err) {
+            console.log("error: ", err);
+            result(err, null);
+            return;
+        }
+        console.log(`deleted ${res.affectedRows} students`);
+        result(null, res);
+    });
+};
+
+Supplier.exportAll = result => {
+    const dbConn = Supplier.dbConnect();
+    dbConn.query("SELECT name, address, city, state, email, phone FROM students ORDER BY id", (err, res) => {
+        dbConn.end();
+        if (err) {
+            console.log("error: ", err);
+            result(err, null);
+            return;
+        }
+        result(null, res);
+    });
+};
+
+// rows is an array of [name, address, city, state, email, phone] arrays
+Supplier.createMany = (rows, result) => {
+    const dbConn = Supplier.dbConnect();
+    dbConn.query("INSERT INTO students (name, address, city, state, email, phone) VALUES ?", [rows], (err, res) => {
+        dbConn.end();
+        if (err) {
+            console.log("error: ", err);
+            result(err, null);
+            return;
+        }
+        console.log(`imported ${res.affectedRows} students`);
         result(null, res);
     });
 };
